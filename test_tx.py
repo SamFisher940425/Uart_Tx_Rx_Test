@@ -9,14 +9,14 @@ ser = serial.Serial()
 send_i = 0
 start_trigger = 0  # 触发标志位
 
-
 def port_open_recv():  # 对串口的参数进行配置
-    ser.port = "COM10"
-    ser.baudrate = 50000000
+    ser.port = "COM3"
+    ser.baudrate = 115200
     ser.bytesize = 8
     ser.stopbits = 1
     ser.parity = "N"  # 奇偶校验位
     ser.dsrdtr = True  # DSR/DTR控制
+    ser.timeout = 1  # 超时设置
     ser.open()
     if ser.isOpen():
         print("串口打开成功！")
@@ -50,7 +50,7 @@ def send(send_data):
 
 head = b"\x00\x01"  # 头部
 len_data = 0
-data_raw = "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
+data_raw = "12345678123456781234567812345678123456781234567812345678123456781234567812345678123456781234567812345678123456781234567812345678"
 crc = b"\x00\x00"  # CRC校验位
 
 if __name__ == "__main__":
@@ -63,17 +63,20 @@ if __name__ == "__main__":
     port_open_recv()
     start_trigger = 1
     start_time = time.perf_counter()  # 记录开始时间
-    for i in range(2048):
+    for i in range(512):
         if start_trigger == 1:
             send(head + len_data + data + crc)
             start_trigger = 0
         else:
-            while True:
+            while True:  # 等待串口发送完成
                 recv = ser.read(data.__len__() + 5)  # 接收数据
                 recv_data = recv[3:-2]
                 recv_data = recv_data.decode("utf-8")
                 # print("rx_", recv_data.decode("utf-8"))
                 if recv_data == data_raw:
+                    break
+                else :
+                    print("超时")
                     break
             start_trigger = 1
     end_time = time.perf_counter()  # 记录结束时间
